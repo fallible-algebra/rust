@@ -514,6 +514,7 @@ fn generate_item_def_id_path(
 
     // No need to try to infer the actual parent item if it's not an associated item from the `impl`
     // block.
+<<<<<<< HEAD
     if def_id != original_def_id
         && let DefKind::Impl { of_trait } = tcx.def_kind(def_id)
     {
@@ -531,6 +532,20 @@ fn generate_item_def_id_path(
         {
             def_id = trait_def_id;
         } else if let Some(new_def_id) = ty.ty_adt_def().map(|adt| adt.did()) {
+=======
+    if def_id != original_def_id && matches!(tcx.def_kind(def_id), DefKind::Impl { .. }) {
+        let infcx = tcx.infer_ctxt().build(TypingMode::non_body_analysis());
+        let ty = tcx.type_of(def_id);
+        let ty = infcx
+            .query_normalize(
+                ty::Binder::dummy(ty.instantiate_identity().skip_norm_wip()),
+                tcx.param_env(def_id),
+                ObligationCause::dummy(),
+            )
+            .map(|resolved| infcx.resolve_vars_if_possible(resolved.value).skip_binder())
+            .unwrap_or(ty.skip_binder());
+        if let Some(new_def_id) = ty.ty_adt_def().map(|adt| adt.did()) {
+>>>>>>> 9c13033a798 (Compiles doesn't it)
             def_id = new_def_id;
             maybe_have_impl_not_in_def_crate = !of_trait
                 && !original_def_id.is_local()
